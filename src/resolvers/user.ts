@@ -30,18 +30,53 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-  @Mutation(() => User)
-  async register( 
+  @Mutation(() => UserResponse)
+  async register(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() {em}: MyContext
-  ) {
+    @Ctx() { em }: MyContext
+  ): Promise<UserResponse> {
+    if (options.username.length <= 2) {
+      return {
+        errors: [
+          {
+            field: "username",
+            message: "username must be at least 3 characters long",
+          },
+        ],
+      };
+    }
+
+    if (options.password.length <= 3) {
+      return {
+        errors: [
+          {
+            field: "password",
+            message: "password must be at least 4 characters long",
+          },
+        ],
+      };
+    }
+
     const hashedPassword = await argon2.hash(options.password)
     const user = em.create(User, {
       username: options.username,
       password: hashedPassword,
-  });
-  await em.persistAndFlush(user);
-  return user;
+    });
+    try {
+      await em.persistAndFlush(user);
+    } catch (err) {
+      // duplicate username error
+      if (err.code === '23505' { //|| err.detail.includes("already exists")) {
+        return {
+          errors: [{
+            field: "username", 
+            message: "username is taken",
+        }]
+      }
+      }
+      console.log('message: ', err.message);
+    }
+    return { user };
   }
 
   @Mutation(() => UserResponse)
@@ -67,13 +102,13 @@ export class UserResolver {
           {
             field: "password",
             message: "incorrect password",
-          }
-        ]
-      }
+          },
+        ],
+      };
     }
 
     return {
       user,
     };
-
+  }
 }
