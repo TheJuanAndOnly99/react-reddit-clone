@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
-import { Field, ObjectType, Int } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 
 @ObjectType()
 @Entity()
@@ -18,6 +18,6 @@ export class Post {
   updatedAt = new Date();
 
   @Field()
-  @Property({type: "text" })
+  @Property({type: "text" })  
   title!: string;
 }
